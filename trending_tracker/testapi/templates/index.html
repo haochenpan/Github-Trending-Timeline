@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+{% block page_content %}
+<h1>Github Trending Page Tracker</h1>
+<div class="data">
+    <table>
+        <tr>
+            <th>language</th>
+            <th>code</th>
+            <th>date range</th>
+            <th>last update</th>
+        </tr>
+
+        {% for item in index %}
+        <tr>
+            <td> {{ item.page_name }}</td>
+            <td> {{ item.page_code }}</td>
+            <td> {{ item.page_date }}</td>
+            <td> {{ item.update_time }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</div>
+{% endblock %}
