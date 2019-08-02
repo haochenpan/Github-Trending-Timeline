@@ -1,18 +1,16 @@
 from requests import Session
-from time import time, sleep
+from time import sleep
 from conn import Conn
 from queue import Queue, Empty
 from threading import Thread, Event
 from cassandra.query import BatchStatement
-from collections import defaultdict
 from signal import signal, SIGINT, SIGTERM
 from utilities import *
 
 
 class Fetcher:
 
-    def __init__(self, thread_count=1):
-        self.thread_count = thread_count
+    def __init__(self):
         self.conn = Conn()
         self.should_exit = Event()
         self.fetch_on_going = Event()
@@ -32,7 +30,7 @@ class Fetcher:
             # prepare
             self.fetch_on_going.set()
             self.conn.load_pages(self.url_queue)
-            threads, sessions = [], [Session() for _ in range(self.thread_count)]
+            threads, sessions = [], [Session() for _ in range(THREAD_COUNT)]
 
             # fork
             for session in sessions:
@@ -41,26 +39,25 @@ class Fetcher:
                 threads.append(t)
             cass_thread = Thread(target=self.store_to_cass)
             cass_thread.start()
+            redis_thread = Thread(target=self.store_to_redis)
+            redis_thread.start()
 
             # join
             for t in threads:
                 t.join()
-            print("th joined")
             self.fetch_on_going.clear()
             cass_thread.join()
-            print("cass_thread joined")
+            redis_thread.join()
 
-            # update DBs
-            print("self.conn.count_repos()", self.conn.count_repos())
-            print("self.conn.count_records()", self.conn.count_records())
-            self.store_to_redis()
+            print("# of repos = ", self.conn.count_repos())
+            print("# of records = ", self.conn.count_records())
 
             if not self.should_exit.is_set():
                 assert self.url_queue.qsize() == 0
             assert self.cass_write_queue.qsize() == 0
             assert self.redis_write_queue.qsize() == 0
-            print("sleep", fetch_sleep_time)
-            self.should_exit.wait(fetch_sleep_time)
+            print("sleep", FETCH_SLEEP_TIME)
+            self.should_exit.wait(FETCH_SLEEP_TIME)
 
     def thread_perform_fetch(self, session):
         while not self.should_exit.is_set():
@@ -69,28 +66,26 @@ class Fetcher:
                 page_dict = self.url_queue.get(False)
             except Empty:
                 break
-            # print("fetching", page_dict["url"])
 
             # fetch the web page
             try:
                 resp = session.get(page_dict["url"])
                 html = etree.HTML(resp.text)
-                cnt, items = fetch_trending_page(html, page_dict)
+                cnt, items = fetch_trending_page(html)
                 page_dict["update_time"] = int(time())
                 self.cass_write_queue.put((page_dict, items))
             except Exception as e:
-                cnt, error = -1, repr(e)
-                print("error", error, page_dict)
+                print("error", repr(e), page_dict)
 
             # do sleep
-            sleep(thread_sleep_time)
+            sleep(THREAD_SLEEP_TIME)
 
-    def store_to_cass(self, batch_size=50):
+    def store_to_cass(self):
 
         while self.fetch_on_going.is_set() or self.cass_write_queue.qsize():
             batch = BatchStatement()
             batch_cnt = 0
-            while batch_cnt < batch_size:
+            while batch_cnt < CASS_BATCH_SIZE:
                 try:
                     pd, items = self.cass_write_queue.get(True, 3)
                     batch_cnt += (1 + len(items))
@@ -109,14 +104,14 @@ class Fetcher:
 
                 except Empty:
                     if not self.fetch_on_going.is_set():
-                        batch_cnt = batch_size
+                        batch_cnt = CASS_BATCH_SIZE
             self.conn.session.execute(batch)
 
-    def store_to_redis(self, batch_size=100):
+    def store_to_redis(self):
         print("self.redis_write_queue.qsize()", self.redis_write_queue.qsize())
         while self.fetch_on_going.is_set() or self.redis_write_queue.qsize():
             batch_cnt = 0
-            while batch_cnt < batch_size:
+            while batch_cnt < REDIS_BATCH_SIZE:
                 try:
                     key, items = self.redis_write_queue.get(True, 3)
                     batch_cnt += 1
@@ -124,7 +119,7 @@ class Fetcher:
 
                 except Empty:
                     if not self.fetch_on_going.is_set():
-                        batch_cnt = batch_size
+                        batch_cnt = REDIS_BATCH_SIZE
             self.conn.redis_pipeline.execute()
         self.conn.redis_pipeline.set("index", str(self.conn.select_sorted_pages()))
         self.conn.redis_pipeline.set("index_by_time", str(self.conn.select_sorted_pages(True)))
@@ -133,7 +128,7 @@ class Fetcher:
 
 if __name__ == '__main__':
     pass
-    f = Fetcher(5)
+    f = Fetcher()
     f.fetcher_routine()
     # f.store_to_redis()
 

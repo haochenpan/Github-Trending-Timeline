@@ -1,19 +1,24 @@
-import requests
+from requests import get
 from lxml import etree
 from time import time
-thread_sleep_time = 1
-fetch_sleep_time = 300
 
-allowable_date_range = ["daily", "weekly", "monthly"]
+THREAD_COUNT = 3
+THREAD_SLEEP_TIME = 1
+FETCH_SLEEP_TIME = 120
+CASS_DB_FETCH_SIZE = 500
+CASS_BATCH_SIZE = 50
+REDIS_BATCH_SIZE = 100
+
+ALLOWABLE_DATE_RANGE = ["daily", "weekly", "monthly"]
 
 
 def page_date_sort(word):
-    return allowable_date_range.index(word)
+    return ALLOWABLE_DATE_RANGE.index(word)
 
 
 def download_languages():
     trending_page = "https://github.com/trending"
-    resp = requests.get(trending_page)
+    resp = get(trending_page)
     html = etree.HTML(resp.text)
     languages = html.xpath('//div[@data-filterable-for="text-filter-field"]/a[@role="menuitemradio"]')
     code_name_set = set()
@@ -31,7 +36,7 @@ def download_languages():
     return code_name_set
 
 
-def fetch_trending_page(html, page_dict):
+def fetch_trending_page(html):
     items = html.xpath('//*[@class="Box-row"]')
     item_dicts = []
     rank_counter = 1

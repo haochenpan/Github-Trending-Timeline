@@ -1,16 +1,15 @@
 from collections import defaultdict
-from queue import Queue, Empty
-import redis
+from queue import Queue
 from cassandra.cluster import Cluster
 from cassandra.query import BatchStatement
 from cassandra.query import dict_factory, named_tuple_factory
-
+from redis import Redis
 from utilities import *
 
 
 class Conn:
     def __init__(self):
-        self.redis = redis.Redis(host='localhost', port=6379, db=0)
+        self.redis = Redis(host='localhost', port=6379, db=0)
         self.redis_pipeline = self.redis.pipeline()
 
         self.cluster = Cluster()
@@ -73,7 +72,7 @@ class Conn:
         print("previous db record count: ", row_ctr)
         for code, name in code_and_name:
             batch = BatchStatement()
-            for date in allowable_date_range:
+            for date in ALLOWABLE_DATE_RANGE:
                 batch.add(self.prep_page, (code, date, name, code_date_dict[(code, date)]))
             self.session.execute(batch)
 
@@ -81,12 +80,17 @@ class Conn:
         print("before loading, qsize=", queue.qsize())
         self.session.row_factory = dict_factory
         rows = self.session.execute(
-            """ SELECT * FROM trending.page ALLOW FILTERING;
+            """ SELECT * FROM trending.page;
             """
         )
+
+        # queue.put(row)
+        # row_list.append(row)
+
+        rows = sorted(rows, key=lambda e: (e["update_time"], e["page_code"], page_date_sort(e['page_date'])))[:100]
         for row in rows:
             row["url"] = f'https://github.com/trending/{row["page_code"]}?since={row["page_date"]}'
-            queue.put(row)
+        [queue.put(row) for row in rows]
 
         self.session.row_factory = named_tuple_factory
         print("after loading, qsize=", queue.qsize())
@@ -100,7 +104,7 @@ class Conn:
                 """
             )
             self.session.row_factory = named_tuple_factory
-            return sorted([row for row in rows], key=lambda e: (e["page_name"], page_date_sort(e['page_date'])))
+            return sorted([row for row in rows], key=lambda e: (e["page_code"], page_date_sort(e['page_date'])))
         else:
             self.session.row_factory = dict_factory
             rows = self.session.execute(
@@ -134,15 +138,3 @@ if __name__ == '__main__':
     conn = Conn()
     conn.insert_pages(code_name_set)
     print("conn.count_pages()", conn.count_pages())
-
-    targets = {
-        'Trending': '/trending/?since=daily',
-        'C': '/trending/c?since=daily',
-        'C++': '/trending/c++?since=daily',
-        'Go': '/trending/go?since=daily',
-        'HTML': '/trending/html?since=daily',
-        'Java': '/trending/java?since=daily',
-        'JavaScript': '/trending/javascript?since=daily',
-        'Python': '/trending/python?since=daily',
-        'Unknown languages': '/trending/unknown?since=daily'
-    }
