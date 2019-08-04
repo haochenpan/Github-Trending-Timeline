@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+    {% include "head.html" %}
+    <title>Github Trending Tracker - Search</title>
+</head>
+
+<body>
+
+
+{% include "search_nav.html" %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <div class="container-fluid">
+                <div class="row">
+                    <h4><a href="#">{{info_auth}}</a>/<b><a href="#">{{info_name}}</a></b></h4>
+                </div>
+            </div>
+            <p class="card-text">{{info_desc}}</p>
+            <p class="card-text">{{info_lang}}</p>
+
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th class="text-center">Language</th>
+                <th class="text-center">Date Range</th>
+                <th class="text-center">star</th>
+                <th class="text-center">fork</th>
+                <th class="text-center">rank</th>
+                <th class="text-center">time</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for repo_name, author, page_code, page_date, fork, rank, star, time in data %}
+            <tr>
+                <td class="text-center">{{page_code}}</td>
+                <td class="text-center">{{page_date}}</td>
+                <td class="text-center">{{star}}</td>
+                <td class="text-center">{{fork}}</td>
+                <td class="text-center">{{rank}}</td>
+                <td class="text-center">{{time}}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+{% include "scripts.html" %}
+<script>
+
+
+</script>
+</body>
+</html>

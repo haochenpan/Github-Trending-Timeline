@@ -7,23 +7,7 @@
 
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-        <div class="navbar-nav">
-            <a class="nav-item nav-link active" href="#">Index</a>
-            <a class="nav-item nav-link" href="#">Search</a>
-            <a class="nav-item nav-link" href="#">API</a>
-            <a class="nav-item nav-link" href="#">About</a>
-        </div>
-    </div>
-</nav>
-
-<div class="jumbotron jumbotron-fluid">
-    <div class="container">
-        <h1 class="display-4 text-center">Github Trending Tracker</h1>
-        <p class="lead text-center">See what's popular now and what's popular in the past</p>
-    </div>
-</div>
+{% include "trending_nav.html" %}
 
 <div class="container-fluid">
     <div class="row">
@@ -60,18 +44,45 @@
         </div>
     </div>
 
-    {% include "cards.html" %}
+    <div class="container-fluid" id="cards">
+
+        {% for item in trending %}
+        <div class="card">
+            <div class="card-body">
+                <div class="container-fluid">
+                    <div class="row">
+                        <h4><a href="#">{{item.author}}</a>/<b><a href="#">{{item.repo_name}}</a></b></h4>
+                        <div class="ml-auto"><p class="float-right">{{item.rank}}</p></div>
+                    </div>
+                </div>
+
+                <p class="card-text">{{item.description}}</p>
+                {% if item.lang != "" %}
+                <p class="card-text">{{item.lang}}, {{item.star}} stars, {{item.fork}} forks</p>
+                {% else %}
+                <p class="card-text">{{item.star}} stars, {{item.fork}} forks</p>
+                {% endif %}
+
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
 </div>
 
 {% include "scripts.html" %}
 <script>
-    $(document).on('change', '#daterange', on_dropdown_change);
-    $(document).on('change', '#language', on_dropdown_change);
+    $(document).ready(function () {
+        $(document).on('change', '#daterange', on_dropdown_change);
+        $(document).on('change', '#language', on_dropdown_change);
+    });
+
 
     function on_dropdown_change() {
         var daterange = $('#daterange').find(":selected").attr('data-tokens');
         var language = $('#language').find(":selected").attr('data-tokens');
-        window.location = 'https://githubtr.com/trending/' + language + "?since=" + daterange;
+        window.location = '/trending/' + language + "?since=" + daterange;
+        // window.location = 'https://githubtr.com/trending/' + language + "?since=" + daterange;
         // window.location = 'http://0.0.0.0:8000/trending/' + language + "?since=" + daterange;
     }
 </script>

@@ -123,15 +123,22 @@ class Fetcher:
         self.conn.redis_pipeline.set("time_index_by_name", str(self.conn.select_sorted_pages(True)))
         self.conn.redis_pipeline.set("time_index_by_time", str(self.conn.select_sorted_pages(False)))
         self.conn.redis_pipeline.set("page_index_by_name", str(self.conn.select_distinct_pages()))
-
         self.conn.redis_pipeline.execute()
+
+        repo_author_dict, author_repo_dict, repo_author_set = self.conn.search_indices()
+        for k, v in repo_author_dict.items():
+            self.conn.redis.hset("repo_index", k, str(v))
+        for k, v in author_repo_dict.items():
+            self.conn.redis.hset("author_index", k, str(v))
+        for e in repo_author_set:
+            self.conn.redis.sadd("repo_author_index", str(e))
 
 
 if __name__ == '__main__':
     pass
     f = Fetcher()
     f.store_to_redis()
-    f.fetcher_routine()
+    # f.fetcher_routine()
 
     # resp = Session().get(pd1["url"])
     # html = etree.HTML(resp.text)

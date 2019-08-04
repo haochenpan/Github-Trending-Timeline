@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+    {% include "head.html" %}
+    <title>Github Trending Tracker - Search</title>
+</head>
+
+<body>
+
+{% include "search_nav.html" %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <form class="card card-sm">
+                <div class="card-body row no-gutters align-items-center">
+                    <div class="col">
+                        <div class="input-group">
+                            <input class="form-control form-control-lg form-control-borderless"
+                                   id="author" placeholder="account">
+                            <input class="form-control form-control-lg form-control-borderless"
+                                   id="repo" placeholder="repo">
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-lg btn-secondary" id="submit" type='button'>Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div class="container-fluid">
+
+        {% for author, repo in data %}
+        <div class="card">
+            <div class="card-body">
+                <div class="container-fluid">
+                    <div class="row">
+                        <h4><a href="/record/?a={{author}}&r={{repo}}">{{author}}/{{repo}}</a></h4>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+
+</div>
+
+
+{% include "scripts.html" %}
+<script>
+    $(document).ready(function () {
+        $("#submit").click(submit);
+    });
+
+    function submit() {
+        var repo = $('#repo').val();
+        var author = $('#author').val();
+        window.location = '/search/?r=' + repo + '&a=' + author;
+    }
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+    {% include "head.html" %}
+    <title>Github Trending Tracker - API</title>
+</head>
+
+<body>
+
+{% include "api_nav.html" %}
+
+<div class="container">
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th class="text-center">language</th>
+            <th class="text-center">code</th>
+            <th class="text-center">date range</th>
+            <th class="text-center">last update</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {% for item in index %}
+        <tr>
+            <td class="text-center"> {{ item.page_name }}</td>
+            <td class="text-center"> {{ item.page_code }}</td>
+            <td class="text-center"> {{ item.page_date }}</td>
+            <td class="text-center"> {{ item.update_time }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+
+    </table>
+</div>
+
+{% include "scripts.html" %}
+</body>
+</html>

@@ -129,8 +129,24 @@ class Conn:
                 code_name_list.append((row["page_code"], row["page_name"]))
         return code_name_list
 
+    def search_indices(self):
+        print("# of repos", self.count_repos())
+        repo_author_dict = defaultdict(lambda: [])
+        author_repo_dict = defaultdict(lambda: [])
+        repo_author_set = set()
+        rows = self.session.execute(
+            """SELECT repo_name, author FROM trending.repo;
+            """
+        )
+        for row in rows:
+            repo_author_dict[row[0]].append(row[1])
+            author_repo_dict[row[1]].append(row[0])
+            repo_author_set.add((row[0], row[1]))
+        return repo_author_dict, author_repo_dict, repo_author_set
+
 
 if __name__ == '__main__':
-    code_name_set = download_languages()
+    # code_name_set = download_languages()
     conn = Conn()
-    conn.insert_pages(code_name_set)
+    # conn.insert_pages(code_name_set)
+    conn.search_indices()
