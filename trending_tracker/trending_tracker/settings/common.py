@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "testapi"
+    "web_and_api"
 ]
 
 MIDDLEWARE = [

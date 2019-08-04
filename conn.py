@@ -4,7 +4,7 @@ from cassandra.cluster import Cluster
 from cassandra.query import BatchStatement
 from cassandra.query import dict_factory, named_tuple_factory
 from redis import Redis
-from utilities import *
+from conf import *
 
 
 class Conn:
@@ -85,7 +85,7 @@ class Conn:
 
         for row in rows:
             row["url"] = f'https://github.com/trending/{row["page_code"]}?since={row["page_date"]}'
-        [queue.put(row) for row in rows]
+            queue.put(row)
 
         self.session.row_factory = named_tuple_factory
         print("after loading, qsize=", queue.qsize())

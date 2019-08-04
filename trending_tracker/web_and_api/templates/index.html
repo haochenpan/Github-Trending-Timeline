@@ -29,17 +29,31 @@
     <div class="row">
         <div class="container-fluid">
             <select class="selectpicker float-right" id="daterange">
-                <option data-tokens="daily">daily</option>
-                <option data-tokens="weekly">weekly</option>
-                <option data-tokens="monthly">monthly</option>
+                {% with "daily weekly monthly" as my_list %}
+                {% for date in my_list.split %}
+                {% if since == date %}
+                <option data-tokens={{date}} selected="selected">{{date}}</option>
+                {% else %}
+                <option data-tokens={{date}}>{{date}}</option>
+                {% endif %}
+                {% endfor %}
+                {% endwith %}
             </select>
 
             <select class="selectpicker float-right" data-live-search="true" id="language">
                 {% for code, name in selector %}
-                {% if code != "/" %}
-                <option data-tokens={{ code }}> {{ name }}</option>
+                {% if page == code %}
+                {% if code == '/'%}
+                <option data-tokens="" selected="selected">{{ name }}</option>
                 {% else %}
-                <option data-tokens="">Any Language</option>
+                <option data-tokens={{code}} selected="selected">{{ name }}</option>
+                {% endif %}
+                {% else %}
+                {% if code == '/'%}
+                <option data-tokens="">{{ name }}</option>
+                {% else %}
+                <option data-tokens={{code}}>{{ name }}</option>
+                {% endif %}
                 {% endif %}
                 {% endfor %}
             </select>
@@ -57,13 +71,8 @@
     function on_dropdown_change() {
         var daterange = $('#daterange').find(":selected").attr('data-tokens');
         var language = $('#language').find(":selected").attr('data-tokens');
-        $.ajax({
-            type: "GET",
-            url: 'http://0.0.0.0:8000/api/cards/' + language + "?since=" + daterange,
-            success: function (data) {
-                $('#cards').replaceWith(data);
-            }
-        });
+        window.location = 'https://githubtr.com/trending/' + language + "?since=" + daterange;
+        // window.location = 'http://0.0.0.0:8000/trending/' + language + "?since=" + daterange;
     }
 </script>
 </body>

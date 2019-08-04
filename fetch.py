@@ -5,7 +5,7 @@ from queue import Queue, Empty
 from threading import Thread, Event
 from cassandra.query import BatchStatement
 from signal import signal, SIGINT, SIGTERM
-from utilities import *
+from conf import *
 
 
 class Fetcher:
@@ -130,8 +130,8 @@ class Fetcher:
 if __name__ == '__main__':
     pass
     f = Fetcher()
-    # f.fetcher_routine()
     f.store_to_redis()
+    f.fetcher_routine()
 
     # resp = Session().get(pd1["url"])
     # html = etree.HTML(resp.text)

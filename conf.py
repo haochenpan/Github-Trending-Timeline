@@ -4,8 +4,8 @@ from time import time
 
 THREAD_COUNT = 3
 THREAD_SLEEP_TIME = 1
-FETCH_SLEEP_TIME = 120
-CASS_DB_FETCH_SIZE = 1000
+FETCH_SLEEP_TIME = 300
+CASS_DB_FETCH_SIZE = 2000
 CASS_BATCH_SIZE = 50
 REDIS_BATCH_SIZE = 100
 
@@ -32,7 +32,7 @@ def download_languages():
         code = link[link.rfind("/") + 1:link.rfind("?")]
         name = lang.xpath('string(.//span)').strip()
         code_name_set.add((code, name))
-    code_name_set.add(("/", "Trending"))
+    code_name_set.add(("/", "Any Language"))
     return code_name_set
 
 

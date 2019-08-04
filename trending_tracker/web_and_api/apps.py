@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class TestapiConfig(AppConfig):
-    name = 'testapi'
+    name = 'web_and_api'
