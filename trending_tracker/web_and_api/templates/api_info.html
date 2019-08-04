@@ -1,17 +1,10 @@
-<!doctype html>
-<html lang="en">
-<head>
-    {% include "head.html" %}
-    <title>Github Trending Tracker - API</title>
-</head>
+{% extends 'base.html' %}
 
-<body>
+{% block head_content %}
+<title>Github Trending Tracker</title>
+{% endblock %}
 
-{% include "api_nav.html" %}
-
-
+{% block body_content %}
+{% include "nav_api.html" %}
 <p>No Info Now</p>
-
-{% include "scripts.html" %}
-</body>
-</html>
+{% endblock %}

@@ -1,14 +1,11 @@
-<!doctype html>
-<html lang="en">
-<head>
-    {% include "head.html" %}
-    <title>Github Trending Tracker - Search</title>
-</head>
+{% extends 'base.html' %}
 
-<body>
+{% block head_content %}
+<title>Github Trending Tracker</title>
+{% endblock %}
 
-
-{% include "search_nav.html" %}
+{% block body_content %}
+{% include "nav_search.html" %}
 <div class="container-fluid">
     <div class="card">
         <div class="card-body">
@@ -50,12 +47,4 @@
         </table>
     </div>
 </div>
-
-
-{% include "scripts.html" %}
-<script>
-
-
-</script>
-</body>
-</html>
+{% endblock %}

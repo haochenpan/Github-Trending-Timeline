@@ -138,7 +138,7 @@ if __name__ == '__main__':
     pass
     f = Fetcher()
     f.store_to_redis()
-    # f.fetcher_routine()
+    f.fetcher_routine()
 
     # resp = Session().get(pd1["url"])
     # html = etree.HTML(resp.text)

@@ -79,6 +79,6 @@ def cli_record(request):
         context["info_desc"] = row[2]
         context["info_lang"] = row[3]
         print(context)
-        return render(request, "search_record.html", context)
+        return render(request, "record.html", context)
     else:
         return redirect("/search")

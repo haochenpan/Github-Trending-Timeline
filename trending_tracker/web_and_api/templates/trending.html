@@ -1,15 +1,14 @@
-<!doctype html>
-<html lang="en">
-<head>
-    {% include "head.html" %}
-    <title>Github Trending Tracker</title>
-</head>
+{% extends 'base.html' %}
 
-<body>
+{% block head_content %}
+<title>Github Trending Tracker</title>
+{% endblock %}
 
-{% include "trending_nav.html" %}
-
+{% block body_content %}
+{% include "nav_trending.html" %}
 <div class="container-fluid">
+
+    <!-- 2 selectors -->
     <div class="row">
         <div class="container-fluid">
             <select class="selectpicker float-right" id="daterange">
@@ -44,8 +43,8 @@
         </div>
     </div>
 
+    <!-- cards -->
     <div class="container-fluid" id="cards">
-
         {% for item in trending %}
         <div class="card">
             <div class="card-body">
@@ -69,22 +68,23 @@
 
     </div>
 </div>
+{% endblock %}
 
-{% include "scripts.html" %}
+{% block body_script %}
 <script>
     $(document).ready(function () {
         $(document).on('change', '#daterange', on_dropdown_change);
         $(document).on('change', '#language', on_dropdown_change);
     });
 
-
     function on_dropdown_change() {
         var daterange = $('#daterange').find(":selected").attr('data-tokens');
         var language = $('#language').find(":selected").attr('data-tokens');
         window.location = '/trending/' + language + "?since=" + daterange;
-        // window.location = 'https://githubtr.com/trending/' + language + "?since=" + daterange;
-        // window.location = 'http://0.0.0.0:8000/trending/' + language + "?since=" + daterange;
     }
 </script>
-</body>
-</html>
+{% endblock %}
+
+
+
+
