@@ -108,7 +108,6 @@ class Fetcher:
             self.conn.session.execute(batch)
 
     def store_to_redis(self):
-        print("self.redis_write_queue.qsize()", self.redis_write_queue.qsize())
         while self.fetch_on_going.is_set() or self.redis_write_queue.qsize():
             batch_cnt = 0
             while batch_cnt < REDIS_BATCH_SIZE:
@@ -121,16 +120,18 @@ class Fetcher:
                     if not self.fetch_on_going.is_set():
                         batch_cnt = REDIS_BATCH_SIZE
             self.conn.redis_pipeline.execute()
-        self.conn.redis_pipeline.set("index", str(self.conn.select_sorted_pages()))
-        self.conn.redis_pipeline.set("index_by_time", str(self.conn.select_sorted_pages(True)))
+        self.conn.redis_pipeline.set("time_index_by_name", str(self.conn.select_sorted_pages(True)))
+        self.conn.redis_pipeline.set("time_index_by_time", str(self.conn.select_sorted_pages(False)))
+        self.conn.redis_pipeline.set("page_index_by_name", str(self.conn.select_distinct_pages()))
+
         self.conn.redis_pipeline.execute()
 
 
 if __name__ == '__main__':
     pass
     f = Fetcher()
-    f.fetcher_routine()
-    # f.store_to_redis()
+    # f.fetcher_routine()
+    f.store_to_redis()
 
     # resp = Session().get(pd1["url"])
     # html = etree.HTML(resp.text)

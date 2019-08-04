@@ -28,8 +28,7 @@ class Conn:
         )
 
         self.prep_record = self.session.prepare(
-            """ INSERT INTO trending.record (
-                repo_name, author, page_code, page_date, time, rank, star, fork)
+            """ INSERT INTO trending.record ( repo_name, author, page_code, page_date, time, rank, star, fork)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
         )
@@ -46,7 +45,6 @@ class Conn:
             """ SELECT COUNT(*) FROM trending.record
             """
         )
-
         return int(rows.one()[0])
 
     def count_pages(self):
@@ -67,9 +65,8 @@ class Conn:
             row_ctr += 1
             code_date_dict[(row[0], row[1])] = row[3]
 
-        print("inserting pages, set size: ", len(code_and_name))
-        print("expect db record count: ", len(code_and_name) * 3)
         print("previous db record count: ", row_ctr)
+        print("new db record count: ", len(code_and_name) * 3)
         for code, name in code_and_name:
             batch = BatchStatement()
             for date in ALLOWABLE_DATE_RANGE:
@@ -77,17 +74,15 @@ class Conn:
             self.session.execute(batch)
 
     def load_pages(self, queue: Queue):
-        print("before loading, qsize=", queue.qsize())
         self.session.row_factory = dict_factory
         rows = self.session.execute(
             """ SELECT * FROM trending.page;
             """
         )
 
-        # queue.put(row)
-        # row_list.append(row)
+        rows = sorted(rows, key=lambda e: (e["update_time"], e["page_code"], page_date_sort(e['page_date'])))
+        rows = rows[:CASS_DB_FETCH_SIZE]
 
-        rows = sorted(rows, key=lambda e: (e["update_time"], e["page_code"], page_date_sort(e['page_date'])))[:100]
         for row in rows:
             row["url"] = f'https://github.com/trending/{row["page_code"]}?since={row["page_date"]}'
         [queue.put(row) for row in rows]
@@ -95,24 +90,19 @@ class Conn:
         self.session.row_factory = named_tuple_factory
         print("after loading, qsize=", queue.qsize())
 
-    def select_sorted_pages(self, by_time=False):
+    def select_sorted_pages(self, by_name=True):
+        self.session.row_factory = dict_factory
+        rows = self.session.execute(
+            """ SELECT * FROM trending.page
+            """
+        )
+        self.session.row_factory = named_tuple_factory
+        rows = [row for row in rows]
 
-        if not by_time:
-            self.session.row_factory = dict_factory
-            rows = self.session.execute(
-                """ SELECT * FROM trending.page
-                """
-            )
-            self.session.row_factory = named_tuple_factory
-            return sorted([row for row in rows], key=lambda e: (e["page_code"], page_date_sort(e['page_date'])))
+        if by_name:
+            return sorted(rows, key=lambda e: (e["page_code"], page_date_sort(e['page_date'])))
         else:
-            self.session.row_factory = dict_factory
-            rows = self.session.execute(
-                """ SELECT * FROM trending.page
-                """
-            )
-            self.session.row_factory = named_tuple_factory
-            return sorted([row for row in rows], key=lambda e: e["update_time"])
+            return sorted(rows, key=lambda e: e["update_time"])
 
     def select_repos(self):
         rows = self.session.execute(
@@ -130,11 +120,17 @@ class Conn:
         for row in rows:
             print(row)
 
+    def select_distinct_pages(self):
+        rows = self.select_sorted_pages(True)
+        code_name_list = []
+        assert len(rows) % 3 == 0
+        for i, row in enumerate(rows):
+            if i % 3 == 0:
+                code_name_list.append((row["page_code"], row["page_name"]))
+        return code_name_list
+
 
 if __name__ == '__main__':
-    pass
-
     code_name_set = download_languages()
     conn = Conn()
     conn.insert_pages(code_name_set)
-    print("conn.count_pages()", conn.count_pages())
