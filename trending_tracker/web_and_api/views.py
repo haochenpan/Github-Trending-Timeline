@@ -50,7 +50,6 @@ def cli_search(request):
         if repos is not None:
             repos = eval(repos)
             data_pairs = [(author, repo) for repo in repos]
-            print(data_pairs)
     context = {"data": data_pairs}
     return render(request, "search.html", context)
 
@@ -78,7 +77,6 @@ def cli_record(request):
         context["info_auth"] = row[1]
         context["info_desc"] = row[2]
         context["info_lang"] = row[3]
-        print(context)
         return render(request, "record.html", context)
     else:
         return redirect("/search")
