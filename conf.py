@@ -9,6 +9,7 @@ CASS_DB_FETCH_SIZE = 2000
 CASS_BATCH_SIZE = 50
 REDIS_BATCH_SIZE = 100
 
+KEYSPACE = "trending"
 ALLOWABLE_DATE_RANGE = ["daily", "weekly", "monthly"]
 
 
@@ -22,11 +23,7 @@ def download_languages():
     html = etree.HTML(resp.text)
     languages = html.xpath('//div[@data-filterable-for="text-filter-field"]/a[@role="menuitemradio"]')
     code_name_set = set()
-    ctr = 0
     for lang in languages:
-        # if ctr == 10:
-        #     break
-        ctr += 1
         link = lang.xpath('string(./@href)').strip()
         assert link.endswith("?since=daily")
         code = link[link.rfind("/") + 1:link.rfind("?")]
@@ -71,7 +68,6 @@ def fetch_trending_page(html):
             "star": star,
             "fork": fork,
         }
-        # print(article_dict)
         item_dicts.append(article_dict)
         rank_counter += 1
     return len(item_dicts), item_dicts

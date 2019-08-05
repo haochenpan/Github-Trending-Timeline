@@ -87,19 +87,18 @@ class Fetcher:
             batch_cnt = 0
             while batch_cnt < CASS_BATCH_SIZE:
                 try:
-                    pd, items = self.cass_write_queue.get(True, 3)
+                    page, items = self.cass_write_queue.get(True, 3)
                     batch_cnt += (1 + len(items))
-                    for ar in items:
+                    for item in items:
                         batch.add(self.conn.prep_record,
-                                  (ar["repo_name"], ar["author"], pd["page_code"], pd["page_date"],
-                                   ar["time"], ar["rank"], ar["star"], ar["fork"]))
+                                  (item["repo_name"], item["author"], page["page_code"], page["page_date"],
+                                   item["time"], item["star"], item["fork"], item["rank"]))
                         batch.add(self.conn.prep_repo,
-                                  (ar["repo_name"], ar["author"], ar["description"], ar["lang"]))
+                                  (item["repo_name"], item["author"], item["description"], item["lang"]))
                     batch.add(self.conn.prep_page,
-                              (pd["page_code"], pd["page_date"], pd["page_name"], pd["update_time"]))
+                              (page["page_code"], page["page_date"], page["page_name"], page["update_time"]))
 
-                    key = (pd["page_code"], pd["page_date"])
-                    items = sorted(items, key=lambda e: e["rank"])
+                    key = (page["page_code"], page["page_date"])
                     self.redis_write_queue.put((key, items))
 
                 except Empty:
@@ -122,10 +121,10 @@ class Fetcher:
             self.conn.redis_pipeline.execute()
         self.conn.redis_pipeline.set("time_index_by_name", str(self.conn.select_sorted_pages(True)))
         self.conn.redis_pipeline.set("time_index_by_time", str(self.conn.select_sorted_pages(False)))
-        self.conn.redis_pipeline.set("page_index_by_name", str(self.conn.select_distinct_pages()))
+        self.conn.redis_pipeline.set("page_index_by_name", str(self.conn.select_page_index_by_name()))
         self.conn.redis_pipeline.execute()
 
-        repo_author_dict, author_repo_dict, repo_author_set = self.conn.search_indices()
+        repo_author_dict, author_repo_dict, repo_author_set = self.conn.select_repo_author_indices()
         for k, v in repo_author_dict.items():
             self.conn.redis.hset("repo_index", k, str(v))
         for k, v in author_repo_dict.items():
@@ -137,7 +136,7 @@ class Fetcher:
 if __name__ == '__main__':
     pass
     f = Fetcher()
-    f.store_to_redis()
+    # f.store_to_redis()
     f.fetcher_routine()
 
     # resp = Session().get(pd1["url"])

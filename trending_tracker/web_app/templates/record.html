@@ -11,11 +11,11 @@
         <div class="card-body">
             <div class="container-fluid">
                 <div class="row">
-                    <h4><a href="#">{{info_auth}}</a>/<b><a href="#">{{info_name}}</a></b></h4>
+                    <h4><a href="#">{{author}}</a>/<b><a href="#">{{repo_name}}</a></b></h4>
                 </div>
             </div>
-            <p class="card-text">{{info_desc}}</p>
-            <p class="card-text">{{info_lang}}</p>
+            <p class="card-text">{{description}}</p>
+            <p class="card-text">{{lang}}</p>
 
         </div>
     </div>
@@ -26,21 +26,21 @@
             <tr>
                 <th class="text-center">Language</th>
                 <th class="text-center">Date Range</th>
+                <th class="text-center">time</th>
                 <th class="text-center">star</th>
                 <th class="text-center">fork</th>
                 <th class="text-center">rank</th>
-                <th class="text-center">time</th>
             </tr>
             </thead>
             <tbody>
-            {% for repo_name, author, page_code, page_date, fork, rank, star, time in data %}
+            {% for item in data %}
             <tr>
-                <td class="text-center">{{page_code}}</td>
-                <td class="text-center">{{page_date}}</td>
-                <td class="text-center">{{star}}</td>
-                <td class="text-center">{{fork}}</td>
-                <td class="text-center">{{rank}}</td>
-                <td class="text-center">{{time}}</td>
+                <td class="text-center">{{item.page_code}}</td>
+                <td class="text-center">{{item.page_date}}</td>
+                <td class="text-center">{{item.time}}</td>
+                <td class="text-center">{{item.star}}</td>
+                <td class="text-center">{{item.fork}}</td>
+                <td class="text-center">{{item.rank}}</td>
             </tr>
             {% endfor %}
             </tbody>

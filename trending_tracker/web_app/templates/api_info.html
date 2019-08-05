@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block head_content %}
+<title>Github Trending Tracker</title>
+{% endblock %}
+
+{% block body_content %}
+{% include "nav_api.html" %}
+<div class="container">
+    <h4>Github Trending Tracker (GTT) provides a few API that are available to the public</h4>
+
+    <h5>Github Trending Pages</h5>
+    <p>
+        Endpoint: <a href="/trending/">/trending/some_language_code</a>,language code see two indices below<br>
+        Parameter: <b>since</b> (daily, weekly, and monthly)<br><br>
+        Example: <a href="/trending/?since=monthly">/trending/?since=monthly</a><br>
+        Example: <a href="/trending/c?since=weekly">/trending/c?since=weekly</a><br>
+        Example: <a href="/trending/python?since=daily">/trending/python?since=daily</a><br><br>
+        Page index by name: <a href="/api/name/">for human</a>, and <a href="/api/name/?type=json">for computer</a><br>
+        Page index by time: <a href="/api/time/">for human</a>, and <a href="/api/time/?type=json">for computer</a><br>
+    </p>
+
+    <h5>GTT Search -- See what repos / authors has been on the Trending</h5>
+    <p>
+        Endpoint: <a href="/search/">/search/</a><br>
+        Parameters: <b>r</b> (repo name), <b>a</b> (author/ repo owner), and <b>type</b> (e.g. json).<br><br>
+        Example: <a href="/search/?a=microsoft">/search/?a=microsoft</a><br>
+        Example: <a href="/search/?r=rust">/search/?r=rust</a><br>
+        Example: <a href="/search/?a=microsoft&type=json">/search/?a=microsoft&type=json</a><br>
+        Example: <a href="/search/?r=rust&type=json">/search/?r=rust&type=json</a><br>
+        Example: <a href="/search/?a=microsoft&r=calculator&type=json">/search/?a=microsoft&r=calculator&type=json</a>
+    </p>
+
+    <h5>GTT Record -- Use it if you have the exact repo name and repo owner's name (how? see above)</h5>
+    <p>
+        Endpoint: <a href="/record/">/record/</a><br>
+        Parameters: <b>r</b> (repo name), <b>a</b> (author/ repo owner), and <b>type</b> (e.g. json).
+        Both r and a are required<br><br>
+
+        Example: <a href="/record/?a=microsoft&r=calculator">/record/?a=microsoft&r=calculator</a><br>
+        Example: <a
+            href="/record/?a=microsoft&r=calculator&type=json">/record/?a=microsoft&r=calculator&type=json</a><br>
+    </p>
+
+</div>
+
+{% endblock %}

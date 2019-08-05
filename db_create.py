@@ -57,10 +57,10 @@ if __name__ == '__main__':
             page_code text,
             page_date text,
             time int,
-            rank int,
             star int,
             fork int,
-            PRIMARY KEY (repo_name, author, page_code, page_date)
+            rank int,
+            PRIMARY KEY ((repo_name, author), page_code, page_date, time)
             )
         """
     )
