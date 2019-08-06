@@ -22,3 +22,13 @@ if __name__ == '__main__':
     # repo_index hset
     # author_index hset
     # repo_author_index set
+
+    import logging
+    import os
+    import time
+
+    os.environ['TZ'] = 'US/Eastern'
+    time.tzset()
+
+    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+    logging.warning('Admin logged out')

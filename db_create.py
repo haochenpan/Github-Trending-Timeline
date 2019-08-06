@@ -43,9 +43,11 @@ if __name__ == '__main__':
         """ CREATE TABLE IF NOT EXISTS trending.repo (
             repo_name text,
             author text,
+            page_code text,
+            page_date text,
             description text,
             lang text,
-            PRIMARY KEY (repo_name, author)
+            PRIMARY KEY ((repo_name, author), page_code, page_date)
             )
         """
     )
@@ -56,12 +58,13 @@ if __name__ == '__main__':
             author text,
             page_code text,
             page_date text,
-            time int,
-            star int,
-            fork int,
+            seq int,
+            epoch int,
+            start int,
+            end int,
             rank int,
-            PRIMARY KEY ((repo_name, author), page_code, page_date, time)
-            )
+            PRIMARY KEY ((repo_name, author, page_code, page_date), seq) 
+            ) WITH CLUSTERING ORDER BY (seq DESC)
         """
     )
 

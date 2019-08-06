@@ -24,22 +24,18 @@
         <table class="table table-bordered">
             <thead>
             <tr>
-                <th class="text-center">Language</th>
-                <th class="text-center">Date Range</th>
-                <th class="text-center">time</th>
-                <th class="text-center">star</th>
-                <th class="text-center">fork</th>
+                <th class="text-center">#</th>
+                <th class="text-center">start</th>
+                <th class="text-center">end</th>
                 <th class="text-center">rank</th>
             </tr>
             </thead>
             <tbody>
             {% for item in data %}
             <tr>
-                <td class="text-center">{{item.page_code}}</td>
-                <td class="text-center">{{item.page_date}}</td>
-                <td class="text-center">{{item.time}}</td>
-                <td class="text-center">{{item.star}}</td>
-                <td class="text-center">{{item.fork}}</td>
+                <td class="text-center">{{item.seq}}</td>
+                <td class="text-center">{{item.start}}</td>
+                <td class="text-center">{{item.end}}</td>
                 <td class="text-center">{{item.rank}}</td>
             </tr>
             {% endfor %}

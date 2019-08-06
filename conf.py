@@ -1,16 +1,21 @@
 from requests import get
 from lxml import etree
-from time import time
+from time import time, tzset
+import os
+import logging
 
 THREAD_COUNT = 3
 THREAD_SLEEP_TIME = 1
 FETCH_SLEEP_TIME = 600
 CASS_DB_FETCH_SIZE = 2000
-CASS_BATCH_SIZE = 50
+CASS_BATCH_SIZE = 5
 REDIS_BATCH_SIZE = 100
 
 KEYSPACE = "trending"
 ALLOWABLE_DATE_RANGE = ["daily", "weekly", "monthly"]
+os.environ['TZ'] = 'US/Eastern'
+tzset()
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 
 def page_date_sort(word):
@@ -18,14 +23,14 @@ def page_date_sort(word):
 
 
 def download_languages():
-    trending_page = "https://github.com/trending"
+    trending_page = "https://github.com/trending/?since=monthly"
     resp = get(trending_page)
     html = etree.HTML(resp.text)
     languages = html.xpath('//div[@data-filterable-for="text-filter-field"]/a[@role="menuitemradio"]')
     code_name_set = set()
     for lang in languages:
         link = lang.xpath('string(./@href)').strip()
-        assert link.endswith("?since=daily")
+        assert link.endswith("?since=monthly")
         code = link[link.rfind("/") + 1:link.rfind("?")]
         name = lang.xpath('string(.//span)').strip()
         code_name_set.add((code, name))
@@ -39,9 +44,12 @@ def fetch_trending_page(html):
     rank_counter = 1
     for item in items:
         name_author = item.xpath('string(./h1/a/@href)').strip()
-        assert name_author[0] == "/"
+        if name_author[0] != "/":
+            logging.warning("error in fetching a trending page")
         name_author = name_author[1:]
-        assert name_author.count("/") == 1
+        if name_author.count("/") != 1:
+            logging.warning("error in fetching a trending page")
+
         author = name_author[:name_author.index("/")]
         repo_name = name_author[name_author.index("/") + 1:]
         description = item.xpath('string(./p)').strip()
@@ -57,7 +65,7 @@ def fetch_trending_page(html):
                 fork = e.xpath('string(.)').replace(",", "").strip()
                 fork = int(fork)
             else:
-                assert False is True
+                logging.warning("error in fetching a trending page")
         article_dict = {
             "repo_name": repo_name,
             "author": author,
@@ -68,6 +76,7 @@ def fetch_trending_page(html):
             "star": star,
             "fork": fork,
         }
+
         item_dicts.append(article_dict)
         rank_counter += 1
     return len(item_dicts), item_dicts

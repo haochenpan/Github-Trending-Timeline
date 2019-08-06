@@ -6,8 +6,8 @@ urlpatterns = [
     path("trending/", views.cli_trending),
     path("trending/<str:pk>/", views.cli_trending),
 
-    path("search/", views.cli_search),
-    path("record/", views.cli_record),
+    path("search/", views.cli_search_query),
+    path("record/", views.cli_record_query),
 
     path("api/", views.cli_api),
     path("api/<str:pk>/", views.cli_api),

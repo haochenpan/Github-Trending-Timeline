@@ -2,9 +2,11 @@ from collections import defaultdict
 from queue import Queue
 from cassandra.cluster import Cluster
 from cassandra.query import BatchStatement
-from cassandra.query import dict_factory, named_tuple_factory
+from cassandra.query import dict_factory
 from redis import Redis
 from conf import *
+
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 
 class Conn:
@@ -23,14 +25,14 @@ class Conn:
         )
 
         self.prep_repo = self.session.prepare(
-            """ INSERT INTO repo (repo_name, author, description, lang)
-                VALUES (?, ?, ?, ?)
+            """ INSERT INTO repo (repo_name, author, page_code, page_date, description, lang)
+                VALUES (?, ?, ?, ?, ?, ?)
             """
         )
 
         self.prep_record = self.session.prepare(
-            """ INSERT INTO record (repo_name, author, page_code, page_date, time, star, fork, rank)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """ INSERT INTO record (repo_name, author, page_code, page_date, seq, epoch, start, end, rank)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
         )
 
@@ -66,8 +68,8 @@ class Conn:
             row_ctr += 1
             code_date_dict[(row["page_code"], row["page_date"])] = row["update_time"]
 
-        print("previous db record count: ", row_ctr)
-        print("new db record count: ", len(code_and_name) * 3)
+        logging.warning("previous db record count: " + str(row_ctr))
+        logging.warning("new db record count: " + str(len(code_and_name) * 3))
         for code, name in code_and_name:
             batch = BatchStatement()
             for date in ALLOWABLE_DATE_RANGE:
@@ -87,7 +89,7 @@ class Conn:
             row["url"] = f'https://github.com/trending/{row["page_code"]}?since={row["page_date"]}'
             queue.put(row)
 
-        print("after loading, qsize=", queue.qsize())
+        logging.warning("after loading, qsize= " + str(queue.qsize()))
 
     def select_sorted_pages(self, by_name=True):
         rows = self.session.execute(
@@ -109,7 +111,6 @@ class Conn:
         return code_name_list
 
     def select_repo_author_indices(self):
-        print("# of repos", self.count_repos())
         repo_author_dict = defaultdict(lambda: [])
         author_repo_dict = defaultdict(lambda: [])
         repo_author_set = set()
@@ -123,36 +124,51 @@ class Conn:
             repo_author_set.add((row["repo_name"], row["author"]))
         return repo_author_dict, author_repo_dict, repo_author_set
 
-    # def read_modify_write(self, page, items):
-    #     batch = BatchStatement()
-    #     for item in items:
-    #         row = self.session.execute(
-    #             """ SELECT * FROM record
-    #                 WHERE repo_name=%s AND author=%s AND page_code=%s AND page_date=%s
-    #                 ORDER BY seq DESC
-    #                 LIMIT 1
-    #             """, [item["repo_name"], item["author"], page["page_code"], page["page_date"]]
-    #         ).one()
-    #         if row is None:
-    #             batch.add(self.prep_record, (item["repo_name"], item["author"], page["page_code"], page["page_date"],
-    #                                          0, item["time"], item["time"], item["rank"]))
-    #         else:
-    #             old_rank = row["rank"]
-    #             new_rank = item["rank"]
-    #             old_seq = row["seq"]
-    #
-    #             if old_rank == new_rank:
-    #                 old_start = row["start"]
-    #                 batch.add(self.prep_record,
-    #                           (item["repo_name"], item["author"], page["page_code"], page["page_date"],
-    #                            old_seq, old_start, item["time"], item["rank"]))
-    #             else:
-    #                 new_seq = old_seq + 1
-    #                 old_end = row["end"]
-    #                 batch.add(self.prep_record,
-    #                           (item["repo_name"], item["author"], page["page_code"], page["page_date"],
-    #                            new_seq, old_end, item["time"], item["rank"]))
-    #     self.session.execute(batch)
+    def select_repo_or_author_index(self):
+        repo_or_author_dict = defaultdict(lambda: [])
+        rows = self.session.execute(
+            """SELECT * FROM repo;
+            """
+        )
+        for row in rows:
+            repo = row["repo_name"].lower()
+            author = row["author"].lower()
+            if row not in repo_or_author_dict[repo]:
+                repo_or_author_dict[repo].append(row)
+            if row not in repo_or_author_dict[author]:
+                repo_or_author_dict[author].append(row)
+        return repo_or_author_dict
+
+    def batch_update_new_records(self, epoch: int, batch, page, items):
+        """
+        seq: start from 1, then 2, 3, ...
+        epoch: int(time())
+        item: item dict collected
+        page: page dict from db
+        row: record row fetched from db
+        """
+        pass
+
+    def batch_update_old_records(self, epoch: int, keys: set):
+        batch = BatchStatement()
+        rows = self.session.execute(
+            """ SELECT * FROM record PER PARTITION LIMIT 1;
+            """
+        )
+        ctr = 0
+        for i, row in enumerate(rows):
+            if row["epoch"] < epoch and row["rank"] != 0 and (row["page_code"], row["page_date"]) in keys:
+                ctr += 1
+                new_seq = row["seq"] + 1
+                old_end = row["end"]
+                pk = (row["repo_name"], row["author"], row["page_code"], row["page_date"])
+                logging.warning(f"item disappeared {pk}")
+                batch.add(self.prep_record, (*pk, new_seq, epoch, old_end, int(time()), 0))
+            if len(batch) > CASS_BATCH_SIZE:
+                self.session.execute(batch)
+                batch = BatchStatement()
+        self.session.execute(batch)
+        print("ctr = ", ctr)
 
 
 if __name__ == '__main__':

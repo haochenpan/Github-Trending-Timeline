@@ -50,7 +50,8 @@
             <div class="card-body">
                 <div class="container-fluid">
                     <div class="row">
-                        <h4><a href="#">{{item.author}}</a>/<b><a href="#">{{item.repo_name}}</a></b></h4>
+                        <h4><a href="/search/?q={{item.author}}">{{item.author}}</a>/<b>
+                            <a href="/search/?q={{item.repo_name}}">{{item.repo_name}}</a></b></h4>
                         <div class="ml-auto"><p class="float-right">{{item.rank}}</p></div>
                     </div>
                 </div>

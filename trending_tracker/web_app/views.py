@@ -48,6 +48,27 @@ def cli_search(request):
         return render(request, "search.html", context)
 
 
+def cli_search_query(request):
+    query = request.GET.get('q', '').lower()
+    type = request.GET.get('type', '')
+    if query != '':
+        dicts = r.hget("repo_or_author", query)
+        if dicts is None and type == 'json':
+            return HttpResponse(dumps([]))
+        elif dicts is None:
+            return render(request, "search.html", dict())
+        else:
+            dicts = eval(dicts)
+            if type == 'json':
+                return HttpResponse(dumps(dicts))
+            else:
+                context = {"data": dicts}
+                print(context)
+                return render(request, "search.html", context)
+    else:
+        return render(request, "search.html", dict())
+
+
 def cli_api(request, pk="name"):
     typ = request.GET.get('type', '')
     if pk == "name":
@@ -99,3 +120,39 @@ def cli_record(request):
             return render(request, "record.html", context)
     else:
         return redirect("/search")
+
+
+def cli_record_query(request):
+    repo = request.GET.get('r', '')
+    author = request.GET.get('a', '')
+    code = request.GET.get('c', '')
+    date = request.GET.get('d', '')
+    pk = [repo, author, code, date]
+    typ = request.GET.get('type', '')
+    if repo == '' or author == '' or code == '' or date == '':
+        return redirect("/search")
+    else:
+        context = {}
+        repo = c.execute(
+            """ SELECT * FROM repo
+                WHERE repo_name=%s AND author=%s AND page_code=%s AND page_date=%s
+                LIMIT 1
+            """, pk
+        ).one()
+        if repo is None:
+            return redirect("/search")
+
+        for k, v in repo.items():
+            context[k] = v
+
+        rows = c.execute(
+            """ SELECT * FROM record
+                WHERE repo_name=%s AND author=%s AND page_code=%s AND page_date=%s
+            """, pk
+        )
+        context["data"] = [row for row in rows]
+
+        if typ == "json":
+            return HttpResponse(dumps(context))
+        else:
+            return render(request, "record.html", context)

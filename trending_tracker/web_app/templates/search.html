@@ -14,9 +14,7 @@
                     <div class="col">
                         <div class="input-group">
                             <input class="form-control form-control-lg form-control-borderless"
-                                   id="author" placeholder="account">
-                            <input class="form-control form-control-lg form-control-borderless"
-                                   id="repo" placeholder="repo">
+                                   id="query" placeholder="enter a repo name or a repo owner's name...">
                         </div>
                     </div>
                     <div class="col-auto">
@@ -29,14 +27,20 @@
 
 
     <div class="container-fluid">
-        {% for repo, author in data %}
+        {% for item in data %}
         <div class="card">
             <div class="card-body">
                 <div class="container-fluid">
                     <div class="row">
-                        <h4><a href="/record/?a={{author}}&r={{repo}}">{{author}}/{{repo}}</a></h4>
+                        <h4><a href="/record/?a={{item.author}}&r={{item.repo_name}}&c={{item.page_code}}&d={{item.page_date}}">
+                            {{item.author}}/{{item.repo_name}}</a></h4>
+                        <br>
                     </div>
                 </div>
+                <p class="card-text">{{item.description}}</p>
+                <p class="card-text">{{item.lang}}</p>
+                <p class="card-text">from page code: <b>{{item.page_code}}</b>, date range <b>{{item.page_date}}</b></p>
+
 
             </div>
         </div>
@@ -53,9 +57,9 @@
     });
 
     function submit() {
-        var repo = $('#repo').val();
-        var author = $('#author').val();
-        window.location = '/search/?r=' + repo + '&a=' + author;
+        var query = $('#query').val();
+        console.log(query);
+        window.location = '/search/?q=' + query;
     }
 </script>
 {% endblock %}
