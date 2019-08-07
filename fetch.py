@@ -170,5 +170,4 @@ class Fetcher:
 
 if __name__ == '__main__':
     f = Fetcher()
-    # f.store_to_cass()
     f.fetcher_routine()

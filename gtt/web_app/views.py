@@ -13,10 +13,14 @@ c.row_factory = dict_factory
 def cli_trending(request, pk="/"):
     selector = eval(r.get("page_index_by_name"))
     since = request.GET.get('since', 'daily')
+    type = request.GET.get('type', '')
     trending = eval(r.get(str((pk, since))))
-    context = {"selector": selector, "trending": trending,
-               "page": pk, "since": since}
-    return render(request, "trending.html", context)
+    if type == 'json':
+        return HttpResponse(dumps(trending))
+    else:
+        context = {"selector": selector, "trending": trending,
+                   "page": pk, "since": since}
+        return render(request, "trending.html", context)
 
 
 def cli_search_query(request):

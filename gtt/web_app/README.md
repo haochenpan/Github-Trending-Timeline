@@ -2,21 +2,24 @@
 
 ### Trending Pages
 
-Endpoint: [https://githubtr.com/trending/](https://githubtr.com/trending/) 
-follow by `some_language_code` like `c`, `python`, the full list see page indexes below.
+Endpoint: [https://githubtr.com/trending/](https://githubtr.com/trending/)
+follow by `some_language_code` like `c`, `python`, 
+the full list see page indexes below (the same format as Github Trending pages).
 
 Parameter: `since` could be `daily`, `weekly`, and `monthly`.
 
+Parameter: `type` could be `json` or empty
+
 Example: [https://githubtr.com/trending/c?since=weekly](https://githubtr.com/trending/c?since=weekly).
 
-Example: [https://githubtr.com/trending/python?since=monthly](https://githubtr.com/trending/python?since=monthly).
+Example: [https://githubtr.com/trending/python?since=monthly&type=json](https://githubtr.com/trending/python?since=monthly&type=json).
 
 Page index by name: [for human](https://www.githubtr.com/api/name/), [for machine](https://www.githubtr.com/api/name/?type=json).
 
 Page index by last update time: [for human](https://www.githubtr.com/api/time/), [for machine](https://www.githubtr.com/api/time/?type=json).
 
 
-### Search a Repo (whether got onto trending)
+### Search a Repo (first level searching: whether it was on Trending)
 
 Endpoint: [https://githubtr.com/search/](https://githubtr.com/search/).
 
@@ -29,7 +32,7 @@ Example: [https://githubtr.com/search/?q=microsoft](https://githubtr.com/search/
 Example: [https://githubtr.com/search/?q=calculator&type=json](https://githubtr.com/search/?q=calculator&type=json)
 
 
-### Search a Repo's History (what ranks it had)
+### Search a Repo's History (second level searching: what ranks it has if it's on Trending)
 
 Endpoint: [https://githubtr.com/record/](https://githubtr.com/record/).
 
