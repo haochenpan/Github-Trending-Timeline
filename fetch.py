@@ -75,7 +75,7 @@ class Fetcher:
                 if resp.status_code != 200:
                     logging.warning(f"{resp.url} not 200!")
                     continue
-                logging.warning(f"fetching {resp.url}")
+                # logging.warning(f"fetching {resp.url}")
                 html = etree.HTML(resp.text)
                 cnt, items = fetch_trending_page(html)
                 page_dict["update_time"] = int(time())
