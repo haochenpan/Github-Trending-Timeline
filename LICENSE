@@ -1,4 +1,3 @@
-"""
 MIT License
 
 Copyright (c) 2019 Haochen Pan
@@ -20,24 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-
-"""
-
-from django.urls import path
-from . import views
-
-urlpatterns = [
-    path("", views.cli_trending),
-    path("trending/", views.cli_trending),
-    path("trending/<str:pk>/", views.cli_trending),
-
-    path("search/", views.cli_search_query),
-    path("record/", views.cli_record_query),
-
-    path("api/", views.cli_api),
-    path("api/<str:pk>/", views.cli_api),
-
-    path("about/", views.cli_about),
-
-]
