@@ -155,10 +155,8 @@ class Conn:
             """ SELECT * FROM record PER PARTITION LIMIT 1;
             """
         )
-        ctr = 0
         for i, row in enumerate(rows):
             if row["epoch"] < epoch and row["rank"] != 0 and (row["page_code"], row["page_date"]) in keys:
-                ctr += 1
                 new_seq = row["seq"] + 1
                 old_end = row["end"]
                 pk = (row["repo_name"], row["author"], row["page_code"], row["page_date"])
@@ -168,7 +166,6 @@ class Conn:
                 self.session.execute(batch)
                 batch = BatchStatement()
         self.session.execute(batch)
-        print("ctr = ", ctr)
 
 
 if __name__ == '__main__':

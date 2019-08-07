@@ -11,5 +11,6 @@ urlpatterns = [
 
     path("api/", views.cli_api),
     path("api/<str:pk>/", views.cli_api),
+    path("about/", views.cli_about),
 
 ]

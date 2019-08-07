@@ -7,6 +7,8 @@ from cassandra.query import BatchStatement
 from signal import signal, SIGINT, SIGTERM
 from conf import *
 
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+
 
 class Fetcher:
 
@@ -71,70 +73,76 @@ class Fetcher:
             try:
                 resp = session.get(page_dict["url"])
                 if resp.status_code != 200:
-                    print(resp.url, "not 200!")
+                    logging.warning(f"{resp.url} not 200!")
                     continue
+                logging.warning(f"fetching {resp.url}")
                 html = etree.HTML(resp.text)
                 cnt, items = fetch_trending_page(html)
                 page_dict["update_time"] = int(time())
                 self.cass_write_queue.put((page_dict, items))
             except Exception as e:
-                print("error", repr(e), page_dict)
+                logging.error(f"Exception occurred {page_dict}", exc_info=True)
+
             # do sleep
             sleep(THREAD_SLEEP_TIME)
 
     def store_to_cass(self):
         epoch = int(time())
         page_visited_key_set = set()
+        batch = BatchStatement()
+
         while self.fetch_on_going.is_set() or self.cass_write_queue.qsize():
-            batch = BatchStatement()
-            while True:
-                try:
-                    page, items = self.cass_write_queue.get(True, 3)
-                    for item in items:
+            try:
+                page, items = self.cass_write_queue.get(True, 3)
+            except Empty:
+                if not self.fetch_on_going.is_set():
+                    break
+                else:
+                    continue
 
-                        pk = [item["repo_name"], item["author"], page["page_code"], page["page_date"]]
-                        batch.add(self.conn.prep_repo, (*pk, item["description"], item["lang"]))
+            batch.add(self.conn.prep_page,
+                      (page["page_code"], page["page_date"], page["page_name"], page["update_time"]))
+            if len(batch) > CASS_BATCH_SIZE:
+                self.conn.session.execute(batch)
+                batch = BatchStatement()
 
-                        # paging?
-                        row = self.conn.session.execute(
-                            """ SELECT * FROM record
-                                WHERE repo_name=%s AND author=%s AND page_code=%s AND page_date=%s
-                                LIMIT 1
-                            """, pk
-                        ).one()
-                        if row is None:
-                            logging.warning(f"new record found {pk}")
-                            batch.add(self.conn.prep_record, (*pk, 1, epoch, item["time"], item["time"], item["rank"]))
-                        else:
-                            old_rank = row["rank"]
-                            new_rank = item["rank"]
+            for item in items:
 
-                            if old_rank == new_rank:  # stats not changed
-                                batch.add(self.conn.prep_record,
-                                          (*pk, row["seq"], epoch, row["start"], item["time"], item["rank"]))
-                            elif old_rank != 0:  # stats changed
-                                batch.add(self.conn.prep_record,
-                                          (*pk, row["seq"] + 1, epoch, row["end"], item["time"], item["rank"]))
-                            else:
-                                logging.warning(f"item reappeared {pk}")
-                                batch.add(self.conn.prep_record,
-                                          (*pk, row["seq"], epoch, row["start"], item["time"], 0))
-                                batch.add(self.conn.prep_record,
-                                          (*pk, row["seq"] + 1, epoch, item["time"], item["time"], item["rank"]))
-                        if len(batch) > CASS_BATCH_SIZE:
-                            self.conn.session.execute(batch)
-                            batch = BatchStatement()
-                    batch.add(self.conn.prep_page,
-                              (page["page_code"], page["page_date"], page["page_name"], page["update_time"]))
+                pk = [item["repo_name"], item["author"], page["page_code"], page["page_date"]]
+                batch.add(self.conn.prep_repo, (*pk, item["description"], item["lang"]))
+                if len(batch) > CASS_BATCH_SIZE:
+                    self.conn.session.execute(batch)
+                    batch = BatchStatement()
 
-                    key = (page["page_code"], page["page_date"])
-                    page_visited_key_set.add(key)
-                    self.redis_write_queue.put((key, items))
+                row = self.conn.session.execute(
+                    """ SELECT * FROM record
+                        WHERE repo_name=%s AND author=%s AND page_code=%s AND page_date=%s
+                        LIMIT 1
+                    """, pk).one()
+                if row is None:
+                    logging.warning(f"new record found {pk}")
+                    batch.add(self.conn.prep_record, (*pk, 1, epoch, item["time"], item["time"], item["rank"]))
+                elif row["rank"] == item["rank"]:  # stats not changed
+                    batch.add(self.conn.prep_record,
+                              (*pk, row["seq"], epoch, row["start"], item["time"], item["rank"]))
+                elif row["rank"] != 0:  # stats changed
+                    batch.add(self.conn.prep_record,
+                              (*pk, row["seq"] + 1, epoch, row["end"], item["time"], item["rank"]))
+                else:
+                    logging.warning(f"item reappeared {pk}")
+                    batch.add(self.conn.prep_record,
+                              (*pk, row["seq"], epoch, row["start"], item["time"], 0))
+                    batch.add(self.conn.prep_record,
+                              (*pk, row["seq"] + 1, epoch, item["time"], item["time"], item["rank"]))
+                if len(batch) > CASS_BATCH_SIZE:
+                    self.conn.session.execute(batch)
+                    batch = BatchStatement()
 
-                except Empty:
-                    if not self.fetch_on_going.is_set():
-                        break
-            self.conn.session.execute(batch)
+            key = (page["page_code"], page["page_date"])
+            page_visited_key_set.add(key)
+            self.redis_write_queue.put((key, items))
+
+        self.conn.session.execute(batch)
         self.conn.batch_update_old_records(epoch, page_visited_key_set)
 
     def store_to_redis(self):

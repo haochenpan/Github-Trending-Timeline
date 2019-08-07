@@ -1,7 +1,7 @@
 from requests import get
 from lxml import etree
 from time import time, tzset
-import os
+from os import environ
 import logging
 
 THREAD_COUNT = 3
@@ -9,11 +9,11 @@ THREAD_SLEEP_TIME = 1
 FETCH_SLEEP_TIME = 600
 CASS_DB_FETCH_SIZE = 2000
 CASS_BATCH_SIZE = 5
-REDIS_BATCH_SIZE = 100
+REDIS_BATCH_SIZE = 50
 
 KEYSPACE = "trending"
 ALLOWABLE_DATE_RANGE = ["daily", "weekly", "monthly"]
-os.environ['TZ'] = 'US/Eastern'
+environ['TZ'] = 'US/Eastern'
 tzset()
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
@@ -76,11 +76,6 @@ def fetch_trending_page(html):
             "star": star,
             "fork": fork,
         }
-
         item_dicts.append(article_dict)
         rank_counter += 1
     return len(item_dicts), item_dicts
-
-
-if __name__ == '__main__':
-    pass

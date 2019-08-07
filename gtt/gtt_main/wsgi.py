@@ -1,5 +1,5 @@
 """
-WSGI config for trending_tracker project.
+WSGI config for gtt_main project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'trending_tracker.settings.pod')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gtt_main.settings.pod')
 
 application = get_wsgi_application()
