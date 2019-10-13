@@ -52,13 +52,13 @@ def download_languages():
     trending_page = "https://github.com/trending/?since=monthly"
     resp = get(trending_page)
     html = etree.HTML(resp.text)
-    languages = html.xpath('//div[@data-filterable-for="text-filter-field"]/a[@role="menuitemradio"]')
+    languages = html.xpath('//div[@data-filterable-for="text-filter-field"]/a')
     code_name_set = set()
     for lang in languages:
         link = lang.xpath('string(./@href)').strip()
         assert link.endswith("?since=monthly")
         code = link[link.rfind("/") + 1:link.rfind("?")]
-        name = lang.xpath('string(.//span)').strip()
+        name = lang.xpath('string((./span)[2])').strip()
         code_name_set.add((code, name))
     code_name_set.add(("/", "Any Language"))
     return code_name_set
@@ -80,18 +80,18 @@ def fetch_trending_page(html):
         repo_name = name_author[name_author.index("/") + 1:]
         description = item.xpath('string(./p)').strip()
         lang = item.xpath('string(.//*[@itemprop="programmingLanguage"])').strip()
-        stars_and_forks = item.xpath('.//*[@class="muted-link d-inline-block mr-3"]')
-
-        star, fork = 0, 0
-        for e in stars_and_forks:
-            if 'stargazers' in e.xpath('string(./@href)'):
-                star = e.xpath('string(.)').replace(",", "").strip()
-                star = int(star)
-            elif 'members' in e.xpath('string(./@href)'):
-                fork = e.xpath('string(.)').replace(",", "").strip()
-                fork = int(fork)
-            else:
-                logging.warning("error in fetching a trending page")
+        star = item.xpath('(./div[@class="f6 text-gray mt-2"]/a)[1]')
+        if len(star) != 1:
+            logging.warning("error in fetching a trending page")
+        else:
+            star = star[0].xpath('string(.)').replace(",", "").strip()
+            star = int(star)
+        fork = item.xpath('(./div[@class="f6 text-gray mt-2"]/a)[2]')
+        if len(fork) != 1:
+            logging.warning("error in fetching a trending page")
+        else:
+            fork = fork[0].xpath('string(.)').replace(",", "").strip()
+            fork = int(fork)
         article_dict = {
             "repo_name": repo_name,
             "author": author,
@@ -105,3 +105,16 @@ def fetch_trending_page(html):
         item_dicts.append(article_dict)
         rank_counter += 1
     return len(item_dicts), item_dicts
+
+
+if __name__ == '__main__':
+    pass
+    # for e in download_languages():
+    #     print(e)
+    # url = "https://github.com/trending/html?since=weekly"
+    # resp = get(url)
+    # html = etree.HTML(resp.text)
+    # l, items = fetch_trending_page(html)
+    # print(l)
+    # for item in items:
+    #     print(item)
