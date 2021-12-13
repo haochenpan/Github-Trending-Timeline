@@ -1,4 +1,4 @@
-lxml==4.3.0
+lxml==4.6.5
 redis==3.0.1
 Django==2.2.10
 requests==2.21.0
