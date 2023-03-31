@@ -1,5 +1,5 @@
 lxml==4.3.0
-redis==3.0.1
+redis==4.4.4
 Django==2.2.10
 requests==2.21.0
 cassandra_driver==3.18.0
